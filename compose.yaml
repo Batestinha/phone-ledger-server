@@ -1,0 +1,29 @@
+services:
+  phone-ledger-server:
+    build:
+      context: .
+      args:
+        VERSION: local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - phone-ledger-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=0700,uid=10001,gid=10001
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    cpus: 1.0
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/readyz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  phone-ledger-data:

@@ -1,0 +1,7 @@
+/phone-ledger-server
+/*.db
+/*.db-shm
+/*.db-wal
+/*.db.backup
+/coverage.out
+/dist/
