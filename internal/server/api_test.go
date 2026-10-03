@@ -211,13 +211,20 @@ func TestRecoveryRotationRevokesOtherDevices(t *testing.T) {
 	}
 	secondTokens := decodeResponse[tokenResponse](t, response)
 
+	oldBlob := bytes.Repeat([]byte("old-encrypted-vault"), 2)
+	response = environment.request(http.MethodPut, "/v1/vault", oldBlob, vaultHeaders(created.Tokens.AccessToken, 0, oldBlob))
+	if response.StatusCode != http.StatusNoContent || response.Header.Get("ETag") != `"1"` {
+		t.Fatalf("initial vault status=%d body=%s", response.StatusCode, readBody(response))
+	}
+	response.Body.Close()
+
 	blob := bytes.Repeat([]byte("rotated-encrypted-vault"), 2)
 	newSecret := bytes.Repeat([]byte{9}, 32)
 	newVerifier := sha256.Sum256(newSecret)
-	headers := vaultHeaders(created.Tokens.AccessToken, 0, blob)
+	headers := vaultHeaders(created.Tokens.AccessToken, 1, blob)
 	headers["X-Phone-Ledger-Enrollment-Verifier"] = rawBase64.EncodeToString(newVerifier[:])
 	response = environment.request(http.MethodPut, "/v1/recovery", blob, headers)
-	if response.StatusCode != http.StatusNoContent || response.Header.Get("ETag") != `"1"` {
+	if response.StatusCode != http.StatusNoContent || response.Header.Get("ETag") != `"2"` {
 		t.Fatalf("rotation status=%d body=%s", response.StatusCode, readBody(response))
 	}
 	response.Body.Close()
